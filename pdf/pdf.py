@@ -32,7 +32,7 @@ class PdfBlock(XBlock):
 
     url = String(
         display_name=_("PDF URL"),
-        default=_("https://tutorial.math.lamar.edu/pdf/Trig_Cheat_Sheet.pdf"),
+        default=_(""),
         scope=Scope.content,
         help=_("The URL for your PDF.")
     )

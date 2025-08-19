@@ -1,45 +1,55 @@
-{% load i18n %}
 <div class="wrapper-comp-settings editor-with-buttons is-active" id="settings-tab">
   <ul class="list-input settings-list">
 
     <li class="field comp-setting-entry is-set">
       <div class="wrapper-comp-setting">
-        <label class="label setting-label" for="pdf_edit_display_name">{% trans "Name" %}</label>
+        <label class="label setting-label" for="pdf_edit_display_name">Название</label>
         <input class="input setting-input" id="pdf_edit_display_name" value="{{ display_name }}" type="text">
       </div>
-      <span class="tip setting-help">{% trans "This name appears in the horizontal navigation at the top of the page." %}</span>
+      <span class="tip setting-help">Это название отображается в горизонтальной навигации вверху страницы.</span>
     </li>
 
     <li class="field comp-setting-entry is-set">
       <div class="wrapper-comp-setting">
-        <label class="label setting-label" for="pdf_edit_url">{% trans "PDF URL" %}</label>
+        <label class="label setting-label" for="pdf_edit_url">URL PDF</label>
         <input class="input setting-input" id="pdf_edit_url" value="{{ url }}" type="text">
       </div>
-      <span class="tip setting-help">{% trans "The URL for your PDF." %}</span>
+      <span class="tip setting-help">URL вашего PDF или URL, полученный после загрузки файла ниже.</span>
+    </li>
+
+    <li class="field comp-setting-entry is-set">
+      <div class="wrapper-comp-setting">
+        <label class="label setting-label" for="pdf_edit_file">Загрузить PDF</label>
+        <div class="dropzone" id="pdf_dropzone" style="border: 2px dashed #ccc; padding: 20px; text-align: center; cursor: pointer;">
+          <p>Перетащите PDF-файл сюда или нажмите для выбора.</p>
+          <input type="file" id="pdf_edit_file" accept=".pdf" style="display: none;">
+        </div>
+      </div>
+      <span class="tip setting-help">Загрузите PDF-файл с вашего компьютера. URL будет автоматически заполнен выше после загрузки.</span>
     </li>
 
     {% if not disable_all_download %}
     <li class="field comp-setting-entry is-set">
       <div class="wrapper-comp-setting">
-        <label class="label setting-label" for="pdf_edit_allow_download">{% trans "PDF Download Allowed" %}</label>
+        <label class="label setting-label" for="pdf_edit_allow_download">Разрешить скачивание PDF</label>
         <select class="input setting-input" id="pdf_edit_allow_download">
-          <option value="True" {% if allow_download %}selected{% endif %}>{% trans "True" %}</option>
-          <option value="False" {% if not allow_download %}selected{% endif %}>{% trans "False" %}</option>
+          <option value="True" {% if allow_download %}selected{% endif %}>Да</option>
+          <option value="False" {% if not allow_download %}selected{% endif %}>Нет</option>
         </select>
       </div>
-      <span class="tip setting-help">{% trans "Display a download button for this PDF." %}</span>
+      <span class="tip setting-help">Отображать кнопку для скачивания этого PDF.</span>
     </li>
 
     <li class="field comp-setting-entry is-set">
       <div class="wrapper-comp-setting">
-        <label class="label setting-label" for="pdf_edit_source_text">{% trans "Source document button text" %}</label>
-        <input class="input setting-input" id="pdf_edit_source_text" value="{{ source_text }}" type="text" placeholder="{% trans 'Default : Download the source document' %}">
+        <label class="label setting-label" for="pdf_edit_source_text">Текст кнопки исходного документа</label>
+        <input class="input setting-input" id="pdf_edit_source_text" value="{{ source_text }}" type="text" placeholder="По умолчанию: Скачать исходный документ">
       </div>
       <div class="wrapper-comp-setting">
-        <label class="label setting-label" for="pdf_edit_source_url">{% trans "Source document URL" %}</label>
+        <label class="label setting-label" for="pdf_edit_source_url">URL исходного документа</label>
         <input class="input setting-input" id="pdf_edit_source_url" value="{{ source_url }}" type="text">
       </div>
-      <span class="tip setting-help">{% trans "Add a download link for the source file of your PDF. Use it for example to provide the PowerPoint file used to create this PDF." %}</span>
+      <span class="tip setting-help">Добавьте ссылку для скачивания исходного файла PDF, например, PowerPoint-файла, использованного для создания PDF.</span>
     </li>
     {% endif %}
 
@@ -48,10 +58,10 @@
   <div class="xblock-actions">
     <ul>
       <li class="action-item">
-        <a href="#" class="button action-primary action-save">{% trans "Save" %}</a>
+        <a href="#" class="button action-primary action-save">Сохранить</a>
       </li>
       <li class="action-item">
-        <a href="#" class="button action-cancel">{% trans "Cancel" %}</a>
+        <a href="#" class="button action-cancel">Отмена</a>
       </li>
     </ul>
   </div>
