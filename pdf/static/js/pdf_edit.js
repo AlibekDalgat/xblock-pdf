@@ -70,7 +70,9 @@ function pdfXBlockInitEdit(runtime, element) {
             },
             success: function(response) {
                 if (response.asset && response.asset.url) {
-                    $('#pdf_edit_url', element).val(response.asset.url);
+                    var baseUrl = window.location.origin;
+                    var fullUrl = new URL(response.asset.url, baseUrl).href;
+                    $('#pdf_edit_url', element).val(fullUrl);
                     $dropzoneText.text('Файл загружен! Перетащите новый или нажмите для выбора.');
                 } else {
                     $dropzoneText.text('Не удалось загрузить файл: неизвестная ошибка');
