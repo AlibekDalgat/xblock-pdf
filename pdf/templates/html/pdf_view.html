@@ -1,20 +1,27 @@
 <div class="pdf_block">
   <h2>{{ display_name }}</h2>
-  <iframe src="{{ url }}" type="application/pdf" width="100%" height="600">
 
-  </iframe>
-  {% if not disable_all_download %}
-  <ul>
-    {% if allow_download and url != "" %}
-    <li class="pdf-download-button">
-      <a href="{{ url }}" download>Скачать PDF</a>
-    </li>
-    {% endif %}
-    {% if source_url != "" %}
-    <li class="pdf-download-button">
-      <a href="{{ source_url }}" download>{% if source_text == "" %}Скачать источник{% else %}{{ source_text }}{% endif %}</a>
-    </li>
-    {% endif %}
-  </ul>
+  {% if url != "" %}
+  <div class="pdf-controls">
+    <a href="{{ url }}" target="_blank" class="pdf-new-tab-button">
+      Открыть в полноэкранном режиме
+    </a>
+  </div>
   {% endif %}
+
+  <div class="pdf-viewer-container" id="pdf-viewer-{{ block_id }}">
+    <div class="pdf-canvas-container">
+      <iframe
+        src="{{ url }}#toolbar=0&navpanes=0&scrollbar=0&view=Fit"
+        class="pdf-iframe"
+        width="100%"
+        height="600"
+        data-pdf-url="{{ url }}"
+        style="border: none;"
+      >
+        Ваш браузер не поддерживает отображение PDF.
+        <a href="{{ url }}" download>Скачайте файл</a> для просмотра.
+      </iframe>
+    </div>
+  </div>
 </div>

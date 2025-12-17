@@ -27,32 +27,6 @@
       </div>
       <span class="tip setting-help">Загрузите PDF-файл с вашего компьютера. URL будет автоматически заполнен выше после загрузки.</span>
     </li>
-
-    {% if not disable_all_download %}
-    <li class="field comp-setting-entry is-set">
-      <div class="wrapper-comp-setting">
-        <label class="label setting-label" for="pdf_edit_allow_download">Разрешить скачивание PDF</label>
-        <select class="input setting-input" id="pdf_edit_allow_download">
-          <option value="True" {% if allow_download %}selected{% endif %}>Да</option>
-          <option value="False" {% if not allow_download %}selected{% endif %}>Нет</option>
-        </select>
-      </div>
-      <span class="tip setting-help">Отображать кнопку для скачивания этого PDF.</span>
-    </li>
-
-    <li class="field comp-setting-entry is-set">
-      <div class="wrapper-comp-setting">
-        <label class="label setting-label" for="pdf_edit_source_text">Текст кнопки исходного документа</label>
-        <input class="input setting-input" id="pdf_edit_source_text" value="{{ source_text }}" type="text" placeholder="По умолчанию: Скачать исходный документ">
-      </div>
-      <div class="wrapper-comp-setting">
-        <label class="label setting-label" for="pdf_edit_source_url">URL исходного документа</label>
-        <input class="input setting-input" id="pdf_edit_source_url" value="{{ source_url }}" type="text">
-      </div>
-      <span class="tip setting-help">Добавьте ссылку для скачивания исходного файла PDF, например, PowerPoint-файла, использованного для создания PDF.</span>
-    </li>
-    {% endif %}
-
   </ul>
 
   <div class="xblock-actions">
