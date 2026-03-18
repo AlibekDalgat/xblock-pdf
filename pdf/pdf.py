@@ -1,6 +1,10 @@
 """ pdfXBlock main Python class"""
+import logging
+import traceback
 
 import pkg_resources
+import pymupdf as fitz
+import requests
 from django.template import Context, Template
 
 from xblock.core import XBlock
@@ -10,7 +14,7 @@ from xblockutils.resources import ResourceLoader
 from .utils import _, bool_from_str, DummyTranslationService, is_all_download_disabled
 
 loader = ResourceLoader(__name__)
-
+log = logging.getLogger(__name__)
 
 @XBlock.needs('i18n')
 class PdfBlock(XBlock):
@@ -97,6 +101,8 @@ class PdfBlock(XBlock):
             'source_text': self.source_text,
             'source_url': self.source_url,
             '_i18n_service': self.i18n_service,
+            'get_svg_handler_url': self.runtime.handler_url(self, 'get_svg_pages', thirdparty=True).rstrip('/?'),
+            'block_id': self.scope_ids.usage_id,
         }
         html = loader.render_django_template(
             'templates/html/pdf_view.html',
@@ -175,3 +181,51 @@ class PdfBlock(XBlock):
             return i18n_service
         else:
             return DummyTranslationService()
+
+    @XBlock.json_handler
+    def get_svg_pages(self, data, suffix=''):
+        if not self.url:
+            log.error("Нет URL PDF в блоке")
+            return {'error': 'Нет URL PDF в блоке'}
+
+        try:
+            resp = requests.get(self.url, timeout=15, headers={'User-Agent': 'Open edX XBlock'})
+            resp.raise_for_status()
+            pdf_bytes = resp.content
+
+            doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+
+            first_page = doc[0]
+            rect = first_page.rect
+            page_width = rect.width
+            page_height = rect.height
+
+            target_width = 800
+            zoom = target_width / page_width if page_width > 0 else 2.0
+            zoom = max(0.5, min(3.0, zoom))
+
+            svg_pages = []
+            matrix = fitz.Matrix(zoom, zoom)
+
+            for i in range(len(doc)):
+                page = doc.load_page(i)
+                svg = page.get_svg_image(matrix=matrix)
+                svg_pages.append(svg)
+
+            doc.close()
+
+            return {
+                'success': True,
+                'pages': svg_pages,
+                'total': len(svg_pages)
+            }
+
+        except Exception as e:
+            error_msg = str(e)
+            tb = traceback.format_exc()
+            log.error("КРИТИЧЕСКАЯ ОШИБКА в get_svg_pages:\n%s\n%s", error_msg, tb)
+            return {
+                'error': error_msg,
+                'traceback': tb[:1000]
+            }
+

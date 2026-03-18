@@ -1,28 +1,131 @@
-<div class="pdf_block">
+<div class="pdf_block" data-block-id="{{ block_id }}">
   <h2>{{ display_name }}</h2>
 
   {% if url != "" %}
-  <div class="pdf-controls">
-    <a href="{{ url }}" target="_blank" class="pdf-new-tab-button">
-      Открыть в полноэкранном режиме
-    </a>
-  </div>
+  <div id="pdf-viewer-{{ block_id }}" class="pdf-viewer-container" style="background:#f8f8f8;">
+    <div class="loading">Загрузка страниц...</div>
+    <div class="pages-container" style="display:none;"></div>
 
-  <div class="pdf-viewer-container" id="pdf-viewer-{{ block_id }}">
-    <div class="pdf-canvas-container">
-      <iframe
-        src="{{ url }}#toolbar=0&navpanes=0&scrollbar=0&view=Fit"
-        class="pdf-iframe"
-        width="100%"
-        height="600"
-        data-pdf-url="{{ url }}"
-        style="border: none;"
-      >
-        Ваш браузер не поддерживает отображение PDF.
-        <a href="{{ url }}" download>Скачайте файл</a> для просмотра.
-      </iframe>
+    <div class="toolbar">
+      <div class="toolbar-pagination">
+        <button class="prev-page" data-block-id="{{ block_id }}">←</button>
+        <span><span class="current-page" data-block-id="{{ block_id }}">1</span> / <span class="total-pages" data-block-id="{{ block_id }}">?</span></span>
+        <button class="next-page" data-block-id="{{ block_id }}">→</button>
+      </div>
+
+      <a href="{{ url }}" target="_blank" class="btn-original">Открыть в полноэкранном режиме</a>
     </div>
   </div>
+
+  <style>
+    .pdf-viewer-container .pages-container svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .pdf-viewer-container .pages-container {
+      text-align: center;
+      overflow-x: auto;
+      padding: 20px 0;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
+      padding: 10px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .toolbar-pagination {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toolbar button {
+      padding: 8px 16px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      min-width: 40px;
+    }
+
+    .toolbar button:hover {
+      background: #0056b3;
+    }
+
+    .toolbar button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .btn-original {
+      padding: 8px 16px;
+      background: #28a745;
+      color: white !important;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 500;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-original:hover {
+      background: #218838;
+      color: white;
+      text-decoration: none;
+    }
+
+    .pdf-controls {
+      text-align: right;
+      margin-top: 10px;
+    }
+
+    .btn-download {
+      display: inline-block;
+      padding: 6px 12px;
+      background: #6c757d;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    .btn-download:hover {
+      background: #5a6268;
+      color: white;
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar-pagination {
+        justify-content: center;
+      }
+
+      .btn-original {
+        text-align: center;
+      }
+
+      .pdf-controls {
+        text-align: center;
+      }
+    }
+  </style>
   {% endif %}
 
 </div>

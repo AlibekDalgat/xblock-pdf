@@ -71,14 +71,18 @@ function pdfXBlockInitEdit(runtime, element) {
             success: function(response) {
                 if (response.asset && response.asset.url) {
                     var baseUrl = window.location.origin;
+                    baseUrl = baseUrl.replace(/\/\/studio\.([^\/]+)/, '//$1');
                     var fullUrl = new URL(response.asset.url, baseUrl).href;
                     $('#pdf_edit_url', element).val(fullUrl);
+                    $dropzone.css('background-color', '#d4edda');
+                    $dropzone.css('margin', '0');
                     $dropzoneText.text('Файл загружен! Перетащите новый или нажмите для выбора.');
                 } else {
                     $dropzoneText.text('Не удалось загрузить файл: неизвестная ошибка');
                 }
             },
             error: function(xhr, status, error) {
+                $dropzone.css('background-color', '#f8d7da');
                 $dropzoneText.text('Ошибка загрузки: ' + error);
             }
         });
