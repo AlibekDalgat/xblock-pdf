@@ -1,7 +1,7 @@
 """
 Utility functions for PDF XBlock
 """
-
+from django.template.defaultfilters import register
 from django.conf import settings
 
 
@@ -37,6 +37,10 @@ def ngettext_fallback(text_singular, text_plural, number):
     else:
         return text_plural
 
+@register.filter
+def get(dictionary, key):
+    """Фильтр для получения значения из словаря по ключу"""
+    return dictionary.get(key)
 
 class DummyTranslationService(object):
     """

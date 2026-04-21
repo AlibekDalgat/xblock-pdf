@@ -1,5 +1,7 @@
 """ pdfXBlock main Python class"""
+from datetime import datetime
 import logging
+import os
 import traceback
 
 import pkg_resources
@@ -8,13 +10,34 @@ import requests
 from django.template import Context, Template
 
 from xblock.core import XBlock
-from xblock.fields import Scope, String, Boolean
+from xblock.fields import Scope, String, List, Boolean
 from xblock.fragment import Fragment
 from xblockutils.resources import ResourceLoader
 from .utils import _, bool_from_str, DummyTranslationService, is_all_download_disabled
 
 loader = ResourceLoader(__name__)
 log = logging.getLogger(__name__)
+
+FILE_TYPE_CONFIG = {
+    'excel': {
+        'extensions': ['.xlsx', '.xls', '.csv'],
+        'max_size_mb': 50,
+        'max_count': 3,
+        'display_name': 'Таблицы'
+    },
+    'word': {
+        'extensions': ['.docx', '.doc'],
+        'max_size_mb': 50,
+        'max_count': 3,
+        'display_name': 'Word-документы'
+    },
+    'pptx': {
+        'extensions': ['.pptx', '.ppt'],
+        'max_size_mb': 50,
+        'max_count': 3,
+        'display_name': 'Презентации'
+    }
+}
 
 @XBlock.needs('i18n')
 class PdfBlock(XBlock):
@@ -68,9 +91,43 @@ class PdfBlock(XBlock):
         )
     )
 
+    handout_materials = List(
+        display_name="Раздаточные материалы",
+        help="Список дополнительных материалов к PDF (таблицы, Word, презентации)",
+        scope=Scope.settings,
+        default=[]
+    )
+
     '''
     Util functions
     '''
+    def get_file_type(self, filename):
+        ext = os.path.splitext(filename)[1].lower()
+        for file_type, config in FILE_TYPE_CONFIG.items():
+            if ext in config['extensions']:
+                return file_type
+        return None
+
+    def validate_file(self, filename, size):
+        if not filename:
+            return None, "Имя файла отсутствует"
+
+        file_type = self.get_file_type(filename)
+        if not file_type:
+            return None, f"Неподдерживаемый тип файла: {filename}"
+
+        config = FILE_TYPE_CONFIG[file_type]
+        max_size_bytes = config['max_size_mb'] * 1024 * 1024
+
+        if size > max_size_bytes:
+            return None, f"Файл {filename} превышает максимальный размер {config['max_size_mb']} MB"
+
+        current_count = sum(1 for m in self.handout_materials if m.get('type') == file_type)
+        if current_count >= config['max_count']:
+            return None, f"Максимальное количество файлов типа {config['display_name']}: {config['max_count']}"
+
+        return file_type, None
+
     def load_resource(self, resource_path):
         """
         Gets the content of a resource
@@ -93,6 +150,13 @@ class PdfBlock(XBlock):
         The primary view of the XBlock, shown to students
         when viewing courses.
         """
+        materials_by_type = {ft: [] for ft in FILE_TYPE_CONFIG.keys()}
+        for m in self.handout_materials:
+            if m.get('type') in materials_by_type:
+                mat = m.copy()
+                mat['size_mb'] = round(float(m.get('size', 0)) / (1024 * 1024), 2)
+                materials_by_type[m['type']].append(mat)
+
         context = {
             'display_name': self.display_name,
             'url': self.url,
@@ -100,8 +164,9 @@ class PdfBlock(XBlock):
             'disable_all_download': is_all_download_disabled(),
             'source_text': self.source_text,
             'source_url': self.source_url,
-            '_i18n_service': self.i18n_service,
-            'get_svg_handler_url': self.runtime.handler_url(self, 'get_svg_pages', thirdparty=True).rstrip('/?'),
+            'handout_materials': self.handout_materials,
+            'materials_by_type': materials_by_type,
+            'file_type_config': FILE_TYPE_CONFIG,
             'block_id': self.scope_ids.usage_id,
         }
         html = loader.render_django_template(
@@ -126,13 +191,24 @@ class PdfBlock(XBlock):
         The secondary view of the XBlock, shown to teachers
         when editing the XBlock.
         """
+        materials_by_type = {ft: [] for ft in FILE_TYPE_CONFIG.keys()}
+        for material in self.handout_materials:
+            file_type = material.get('type')
+            if file_type in materials_by_type:
+                mat = material.copy()
+                mat['size_mb'] = round(float(material.get('size', 0)) / (1024 * 1024), 2)
+                materials_by_type[file_type].append(mat)
+
         context = {
             'display_name': self.display_name,
             'url': self.url,
             'allow_download': self.allow_download,
-            'disable_all_download': is_all_download_disabled(),
             'source_text': self.source_text,
-            'source_url': self.source_url
+            'source_url': self.source_url,
+            'handout_materials': self.handout_materials,
+            'materials_by_type': materials_by_type,
+            'file_type_config': FILE_TYPE_CONFIG,
+            'block_id': self.scope_ids.usage_id,
         }
         html = loader.render_django_template(
             'templates/html/pdf_edit.html',
@@ -157,6 +233,48 @@ class PdfBlock(XBlock):
         self.runtime.publish(self, event_type, event_data)
 
     @XBlock.json_handler
+    def add_handout_file(self, data, suffix=''):
+        """Добавление раздаточного материала"""
+        file_name = data.get('file_name')
+        file_url = data.get('file_url')
+        file_size = data.get('file_size', 0)
+
+        if not file_name or not file_url:
+            return {'status': 'fail', 'error': 'Отсутствуют данные файла'}
+
+        file_type, error = self.validate_file(file_name, file_size)
+
+        if error:
+            return {'status': 'fail', 'error': error}
+
+        material = {
+            'type': file_type,
+            'name': file_name,
+            'url': file_url,
+            'size': file_size,
+            'uploaded_at': datetime.utcnow().isoformat()
+        }
+
+        if not hasattr(self, 'handout_materials'):
+            self.handout_materials = []
+
+        self.handout_materials.append(material)
+
+        return {
+            'status': 'success',
+            'material': material
+        }
+
+    @XBlock.json_handler
+    def delete_handout_file(self, data, suffix=''):
+        file_name = data.get('file_name')
+        if not file_name:
+            return {'status': 'fail', 'error': 'Не указано имя файла'}
+
+        self.handout_materials = [m for m in self.handout_materials if m.get('name') != file_name]
+        return {'status': 'success'}
+
+    @XBlock.json_handler
     def save_pdf(self, data, suffix=''):
         """
         The saving handler.
@@ -168,6 +286,9 @@ class PdfBlock(XBlock):
             self.allow_download = bool_from_str(data['allow_download'])
             self.source_text = data['source_text']
             self.source_url = data['source_url']
+
+        if 'handout_materials' in data:
+            self.handout_materials = data['handout_materials']
 
         return {
             'result': 'success',

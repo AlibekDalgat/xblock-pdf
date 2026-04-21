@@ -17,6 +17,31 @@
     </div>
   </div>
 
+  {% if handout_materials %}
+  <div class="handout-materials" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+      <h4>Раздаточные материалы</h4>
+      {% for file_type, config in file_type_config.items %}
+          {% with materials=materials_by_type|get:file_type %}
+              {% if materials %}
+                  <div class="material-type" style="margin-bottom: 18px;">
+                      <h5 style="margin: 12px 0 8px 0; color: #333;">{{ config.display_name }}</h5>
+                      <ul style="padding-left: 20px; margin: 0;">
+                          {% for m in materials %}
+                              <li style="margin: 6px 0;">
+                                  <a href="{{ m.url }}" target="_blank" download="{{ m.name }}" style="color: #007bff; text-decoration: none;">
+                                      {{ m.name }}
+                                  </a>
+                                  <small style="color: #666;"> ({{ m.size_mb }} MB)</small>
+                              </li>
+                          {% endfor %}
+                      </ul>
+                  </div>
+              {% endif %}
+          {% endwith %}
+      {% endfor %}
+  </div>
+  {% endif %}
+
   <style>
     .pdf-viewer-container .pages-container svg {
       max-width: 100%;
