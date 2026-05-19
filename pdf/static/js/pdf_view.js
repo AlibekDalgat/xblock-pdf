@@ -24,26 +24,69 @@ function pdfXBlockInitView(runtime, element) {
     var container = document.getElementById('pdf-viewer-' + blockId);
     if (!container) return;
 
+    var viewerMain = container.querySelector('.viewer-main');
     var pagesDiv = container.querySelector('.pages-container');
     var loading = container.querySelector('.loading');
     var currentEl = container.querySelector('.current-page[data-block-id="' + blockId + '"]');
     var totalEl = container.querySelector('.total-pages[data-block-id="' + blockId + '"]');
-    var prevBtn = container.querySelector('.prev-page[data-block-id="' + blockId + '"]');
-    var nextBtn = container.querySelector('.next-page[data-block-id="' + blockId + '"]');
+    
+    var prevBtns = container.querySelectorAll('.prev-page, .prev-page-side');
+    var nextBtns = container.querySelectorAll('.next-page, .next-page-side');
 
-    if (!pagesDiv || !loading || !currentEl || !totalEl || !prevBtn || !nextBtn) return;
+    if (!pagesDiv || !loading || !currentEl || !totalEl) return;
 
     var currentPage = 0;
     var svgPages = [];
+
+    function updateNavButtons() {
+        prevBtns.forEach(btn => btn.disabled = (currentPage === 0));
+        nextBtns.forEach(btn => btn.disabled = (currentPage === svgPages.length - 1));
+    }
 
     function showPage(idx) {
         if (idx < 0 || idx >= svgPages.length) return;
         currentPage = idx;
         currentEl.textContent = idx + 1;
         pagesDiv.innerHTML = svgPages[idx];
-        prevBtn.disabled = (idx === 0);
-        nextBtn.disabled = (idx === svgPages.length - 1);
+        updateNavButtons();
     }
+
+
+    var touchStartX = 0;
+    var touchEndX = 0;
+    var isDragging = false;
+
+    function handleSwipe() {
+        var swipeThreshold = 50;
+        if (touchEndX < touchStartX - swipeThreshold) {
+            showPage(currentPage + 1);
+        } else if (touchEndX > touchStartX + swipeThreshold) {
+            showPage(currentPage - 1);
+        }
+    }
+
+    pagesDiv.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    pagesDiv.addEventListener('touchend', function(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, {passive: true});
+
+
+    pagesDiv.ondragstart = function() { return false; };
+
+    window.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+    });
+
+    window.addEventListener('mouseup', function(e) {
+        if (!isDragging) return;
+        touchEndX = e.screenX;
+        isDragging = false;
+        handleSwipe();
+    });
 
     var handlerUrl = runtime.handlerUrl(element, 'get_svg_pages');
     var fetchOptions = {
@@ -65,7 +108,7 @@ function pdfXBlockInitView(runtime, element) {
                 totalEl.textContent = data.total;
                 svgPages = data.pages;
                 loading.style.display = 'none';
-                pagesDiv.style.display = 'block';
+                pagesDiv.style.display = 'flex';
                 showPage(0);
             }
         })
@@ -73,14 +116,19 @@ function pdfXBlockInitView(runtime, element) {
             loading.innerHTML = '<p style="color:red;">Failed to load: ' + err + '</p>';
         });
 
-    prevBtn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        showPage(currentPage - 1);
-    };
-    nextBtn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        showPage(currentPage + 1);
-    };
+    prevBtns.forEach(btn => {
+        btn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showPage(currentPage - 1);
+        };
+    });
+    
+    nextBtns.forEach(btn => {
+        btn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showPage(currentPage + 1);
+        };
+    });
 }

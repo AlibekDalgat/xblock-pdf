@@ -4,7 +4,14 @@
   {% if url != "" %}
   <div id="pdf-viewer-{{ block_id }}" class="pdf-viewer-container" style="background:#f8f8f8;">
     <div class="loading">Загрузка страниц...</div>
-    <div class="pages-container" style="display:none;"></div>
+    
+    <div class="viewer-main">
+      <button class="side-nav-btn prev-page-side" data-block-id="{{ block_id }}" title="Предыдущая страница">‹</button>
+      
+      <div class="pages-container" style="display:none;"></div>
+      
+      <button class="side-nav-btn next-page-side" data-block-id="{{ block_id }}" title="Следующая страница">›</button>
+    </div>
 
     <div class="toolbar">
       <div class="toolbar-pagination">
@@ -43,111 +50,197 @@
   {% endif %}
 
   <style>
-    .pdf-viewer-container .pages-container svg {
+    .pdf-viewer-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      user-select: none;
       max-width: 100%;
-      height: auto;
-      display: block;
       margin: 0 auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .viewer-main {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #444;
+      width: 100%;
+      min-height: 200px;
+      max-height: 65vh;
     }
 
     .pdf-viewer-container .pages-container {
-      text-align: center;
-      overflow-x: auto;
-      padding: 20px 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 0;
+      touch-action: pan-y pinch-zoom;
     }
+
+    .pdf-viewer-container .pages-container svg {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      background: white;
+      object-fit: contain;
+    }
+
+    .pdf_block button,
+    .pdf_block .button,
+    .pdf_block .side-nav-btn {
+      box-shadow: none !important;
+      background-image: none !important;
+      text-shadow: none !important;
+      border: none !important;
+      outline: none !important;
+    }
+
+    .pdf_block button:focus, 
+    .pdf_block button:active,
+    .pdf_block button:hover {
+      box-shadow: none !important;
+      background-image: none !important;
+      outline: none !important;
+    }
+
+    .side-nav-btn {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 60px;
+      background: transparent !important;
+      color: rgba(255, 255, 255, 0.3) !important;
+      font-size: 60px;
+      font-weight: 100;
+      cursor: pointer;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+      user-select: none;
+    }
+
+    .side-nav-btn:hover:not(:disabled) {
+      color: rgba(255, 255, 255, 0.7) !important;
+      background: transparent !important;
+    }
+
+    .side-nav-btn:active:not(:disabled) {
+      background: transparent !important;
+      color: rgba(255, 255, 255, 0.9) !important;
+      transform: scale(1.1);
+    }
+
+    .side-nav-btn:disabled {
+      opacity: 0 !important;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .prev-page-side { left: 0; }
+    .next-page-side { right: 0; }
 
     .toolbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 10px 0;
-      padding: 10px;
+      padding: 10px 15px;
       background: #f0f0f0;
-      border-radius: 4px;
-      flex-wrap: wrap;
-      gap: 10px;
+      border-top: 1px solid #ccc;
+      z-index: 20;
     }
 
     .toolbar-pagination {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 15px;
+      font-weight: bold;
+      color: #333;
     }
 
     .toolbar button {
-      padding: 8px 16px;
+      padding: 8px 20px;
       cursor: pointer;
-      background: #007bff;
-      color: white;
-      border: none;
+      background: #007bff !important;
+      color: white !important;
       border-radius: 4px;
-      min-width: 40px;
+      font-size: 16px;
+      transition: background 0.2s;
     }
 
-    .toolbar button:hover {
-      background: #0056b3;
+    .toolbar button:hover:not(:disabled) {
+      background: #0056b3 !important;
     }
 
     .toolbar button:disabled {
-      background: #ccc;
+      background: #ccc !important;
       cursor: not-allowed;
     }
 
     .btn-original {
       padding: 8px 16px;
-      background: #28a745;
+      background: #28a745 !important;
       color: white !important;
       text-decoration: none;
       border-radius: 4px;
       font-weight: 500;
       transition: background 0.2s;
-      white-space: nowrap;
+      box-shadow: none !important;
     }
 
     .btn-original:hover {
-      background: #218838;
-      color: white;
+      background: #218838 !important;
       text-decoration: none;
     }
 
-    .pdf-controls {
-      text-align: right;
-      margin-top: 10px;
+    .loading {
+      padding: 40px;
+      text-align: center;
+      font-size: 1.2em;
+      color: #666;
     }
 
-    .btn-download {
-      display: inline-block;
-      padding: 6px 12px;
-      background: #6c757d;
-      color: white;
-      text-decoration: none;
-      border-radius: 4px;
-      font-size: 0.9em;
-    }
-
-    .btn-download:hover {
-      background: #5a6268;
-      color: white;
-      text-decoration: none;
-    }
-
-    @media (max-width: 768px) {
+    @media (max-width: 800px) {
+      .viewer-main {
+        max-height: 55vh;
+      }
+      .side-nav-btn {
+        width: 45px;
+        font-size: 40px;
+      }
       .toolbar {
         flex-direction: column;
-        align-items: stretch;
+        gap: 12px;
+        padding: 15px;
       }
-
       .toolbar-pagination {
+        width: 100%;
         justify-content: center;
       }
-
       .btn-original {
+        width: 100%;
         text-align: center;
       }
+    }
 
-      .pdf-controls {
-        text-align: center;
+    @media (max-height: 500px) {
+      .viewer-main {
+        max-height: 50vh;
+      }
+      .pdf_block h2 {
+        font-size: 1.2em;
+        margin: 5px 0;
       }
     }
   </style>
